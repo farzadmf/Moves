@@ -34,10 +34,15 @@ class GeneralPreferencesController: NSViewController, SettingsPane {
   @IBOutlet var launchAtLoginCheckbox: NSButton!
   @IBOutlet var checkForUpdatesCheckbox: NSButton!
 
+  var activationDelaySlider: NSSlider!
+  var activationDelayLabel: NSTextField!
+
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    self.preferredContentSize = NSSize(width: 400, height: 434)
+    self.preferredContentSize = NSSize(width: 400, height: 480)
+
+    setupActivationDelayUI()
 
     Task {
       for await value in Defaults.updates(.moveModifiers) {
@@ -169,5 +174,30 @@ class GeneralPreferencesController: NSViewController, SettingsPane {
     {
       NSWorkspace.shared.open(url)
     }
+  }
+
+  private func setupActivationDelayUI() {
+    guard let gridView = view.subviews.first(where: { $0 is NSGridView }) as? NSGridView else { return }
+
+    let label = NSTextField(labelWithString: "Activation delay:")
+    label.alignment = .right
+
+    activationDelaySlider = NSSlider(value: Defaults[.activationDelay], minValue: 0, maxValue: 1, target: self, action: #selector(activationDelayChanged))
+    activationDelaySlider.numberOfTickMarks = 5
+
+    activationDelayLabel = NSTextField(labelWithString: String(format: "%.1fs", Defaults[.activationDelay]))
+    activationDelayLabel.alignment = .left
+
+    let stack = NSStackView(views: [activationDelaySlider, activationDelayLabel])
+    stack.orientation = .horizontal
+    stack.spacing = 8
+
+    gridView.insertRow(at: 5, with: [label, stack])
+  }
+
+  @objc func activationDelayChanged(_ sender: NSSlider) {
+    let value = sender.doubleValue
+    Defaults[.activationDelay] = value
+    activationDelayLabel.stringValue = String(format: "%.1fs", value)
   }
 }

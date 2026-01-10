@@ -8,6 +8,10 @@ class Modifiers {
 
   var onMonitors: [Any?] = []
   var offMonitors: [Any?] = []
+  var keyMonitors: [Any?] = []
+
+  var pendingIntention: Intention = .idle
+  var activationTimer: Timer?
 
   var intention: Intention = .idle {
     didSet { intentionChanged(oldValue: oldValue) }
@@ -28,20 +32,26 @@ class Modifiers {
       NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: self.globalMonitor),
       NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: self.localMonitor),
     ])
+
+    keyMonitors.append(contentsOf: [
+      NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: self.keyDownMonitor),
+      NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: self.localKeyDownMonitor),
+    ])
   }
 
   func remove() {
     removeOffMonitors()
     removeOnMonitors()
+    removeKeyMonitors()
+    cancelActivationTimer()
   }
 
   private func removeOnMonitors() {
-    offMonitors.forEach { (monitor) in
+    onMonitors.forEach { (monitor) in
       guard let m = monitor else { return }
       NSEvent.removeMonitor(m)
     }
-
-    offMonitors = []
+    onMonitors = []
   }
 
   private func removeOffMonitors() {
@@ -49,14 +59,24 @@ class Modifiers {
       guard let m = monitor else { return }
       NSEvent.removeMonitor(m)
     }
-
     offMonitors = []
+  }
+
+  private func removeKeyMonitors() {
+    keyMonitors.forEach { (monitor) in
+      guard let m = monitor else { return }
+      NSEvent.removeMonitor(m)
+    }
+    keyMonitors = []
+  }
+
+  private func cancelActivationTimer() {
+    activationTimer?.invalidate()
+    activationTimer = nil
   }
 
   private func intentionChanged(oldValue: Intention) {
     guard oldValue != intention else { return }
-
-    //    print("intention:\(intention)")
 
     if intention == .idle {
       removeOffMonitors()
@@ -101,12 +121,47 @@ class Modifiers {
     ])
   }
 
+  private func scheduleActivation(for newIntention: Intention) {
+    cancelActivationTimer()
+    pendingIntention = newIntention
+
+    let delay = Defaults[.activationDelay]
+    if delay <= 0 {
+      intention = newIntention
+      return
+    }
+
+    activationTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+      guard let self = self else { return }
+      self.intention = self.pendingIntention
+    }
+  }
+
   private func globalMonitor(_ event: NSEvent) {
-    self.intention = self.intentionFrom(event.modifierFlags)
+    let newIntention = intentionFrom(event.modifierFlags)
+
+    if newIntention == .idle {
+      cancelActivationTimer()
+      pendingIntention = .idle
+      intention = .idle
+    } else if newIntention != pendingIntention {
+      scheduleActivation(for: newIntention)
+    }
   }
 
   private func localMonitor(_ event: NSEvent) -> NSEvent? {
     globalMonitor(event)
+    return event
+  }
+
+  private func keyDownMonitor(_ event: NSEvent) {
+    if pendingIntention != .idle && activationTimer != nil {
+      scheduleActivation(for: pendingIntention)
+    }
+  }
+
+  private func localKeyDownMonitor(_ event: NSEvent) -> NSEvent? {
+    keyDownMonitor(event)
     return event
   }
 }
