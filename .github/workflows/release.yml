@@ -14,12 +14,12 @@ jobs:
 
       - name: Build
         run: |
-          xcodebuild -project Moves.xcodeproj -scheme Moves -configuration Release -derivedDataPath build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -quiet
+          xcodebuild -project Moves.xcodeproj -scheme Moves -configuration Release -derivedDataPath build -destination "platform=macOS,name=Any Mac" CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -quiet
 
       - name: Zip app
         run: |
           cd build/Build/Products/Release
-          zip -r Moves.zip Moves.app
+          zip -rq Moves.zip Moves.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
