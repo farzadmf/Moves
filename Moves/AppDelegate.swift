@@ -35,7 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     statusItem.handleCheckForUpdates = { self.sparkle.checkForUpdates(nil) }
-    statusItem.handlePreferences = { self.preferencesWindowController.show() }
+    statusItem.handlePreferences = { self.showPreferences() }
 
     let modifiers = Modifiers { self.windowHandler.intention = $0 }
 
@@ -60,7 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     Defaults[.accessibilityEnabled] = AXSwift.checkIsProcessTrusted(prompt: true)
 
     if Defaults[.showPrefsOnLaunch] {
-      preferencesWindowController.show()
+      showPreferences()
     }
   }
 
@@ -70,6 +70,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationDidBecomeActive(_ notification: Notification) {
     preferencesWindowController.show()
+  }
+
+  func showPreferences() {
+    preferencesWindowController.show()
+    NSApp.activate(ignoringOtherApps: true)
   }
 
   // MARK: - URLs

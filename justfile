@@ -16,11 +16,11 @@ default:
 
 # Build debug
 @build:
-    xcodebuild -quiet -scheme {{scheme}} -configuration Debug build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+    xcodebuild -quiet -scheme {{scheme}} -configuration Debug -destination 'platform=macOS,arch=arm64' build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
 
 # Build release
 @release:
-    xcodebuild -quiet -scheme {{scheme}} -configuration Release build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+    xcodebuild -quiet -scheme {{scheme}} -configuration Release -destination 'platform=macOS,arch=arm64' build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
 
 # Clean build artifacts
 @clean:
@@ -30,11 +30,13 @@ default:
 rebuild: clean build
 
 # Run the built app
-@run:
+@run: build quit
+    tccutil reset Accessibility dk.computersarehard.Moves 2>/dev/null || true
     open ~/Library/Developer/Xcode/DerivedData/Moves-*/Build/Products/Debug/Moves.app
 
-# Build and run
-br: build run
+# Quit the running app
+@quit:
+    pkill -x Moves || true
 
 # Run tests
 @test:
