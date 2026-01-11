@@ -24,15 +24,20 @@ jobs:
         run: |
           cd build/Build/Products/Release
           zip -rq Moves.zip Moves.app
+          shasum -a 256 Moves.zip > Moves.zip.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Moves
-          path: build/Build/Products/Release/Moves.zip
+          path: |
+            build/Build/Products/Release/Moves.zip
+            build/Build/Products/Release/Moves.zip.sha256
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: build/Build/Products/Release/Moves.zip
+          files: |
+            build/Build/Products/Release/Moves.zip
+            build/Build/Products/Release/Moves.zip.sha256
