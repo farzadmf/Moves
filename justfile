@@ -55,3 +55,25 @@ rebuild: clean build
 @tag:
     git tag v{{version}}
     git push origin v{{version}}
+
+# Update version (default 'patch', can be 'major', 'minor')
+[no-exit-message]
+update-version part="patch":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    current="{{version}}"
+    IFS='.' read -r major minor patch <<< "$current"
+    case "{{part}}" in
+        major) major=$((major + 1)); minor=0; patch=0 ;;
+        minor) minor=$((minor + 1)); patch=0 ;;
+        patch) patch=$((patch + 1)) ;;
+        *) echo "Invalid part: {{part}}. Use major, minor, or patch"; exit 1 ;;
+    esac
+    new="${major}.${minor}.${patch}"
+    if sed --version &>/dev/null; then
+        sed -i "s/^version := \"$current\"/version := \"$new\"/" justfile
+    else
+        sed -i '' "s/^version := \"$current\"/version := \"$new\"/" justfile
+    fi
+    git add justfile && git commit -q -m "Bump version to $new"
+    echo "Updated version: $current -> $new"
