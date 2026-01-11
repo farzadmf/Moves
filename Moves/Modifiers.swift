@@ -8,7 +8,8 @@ class Modifiers {
 
   var onMonitors: [Any?] = []
   var offMonitors: [Any?] = []
-  var keyMonitors: [Any?] = []
+  var eventTap: CFMachPort?
+  var runLoopSource: CFRunLoopSource?
 
   var pendingIntention: Intention = .idle
   var activationTimer: Timer?
@@ -33,16 +34,13 @@ class Modifiers {
       NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: self.localMonitor),
     ])
 
-    keyMonitors.append(contentsOf: [
-      NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: self.keyDownMonitor),
-      NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: self.localKeyDownMonitor),
-    ])
+    setupEventTap()
   }
 
   func remove() {
     removeOffMonitors()
     removeOnMonitors()
-    removeKeyMonitors()
+    removeEventTap()
     cancelActivationTimer()
   }
 
@@ -62,12 +60,61 @@ class Modifiers {
     offMonitors = []
   }
 
-  private func removeKeyMonitors() {
-    keyMonitors.forEach { (monitor) in
-      guard let m = monitor else { return }
-      NSEvent.removeMonitor(m)
+  private func setupEventTap() {
+    let eventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
+
+    let callback: CGEventTapCallBack = { _, type, event, userInfo in
+      guard let userInfo = userInfo else { return Unmanaged.passRetained(event) }
+      let modifiers = Unmanaged<Modifiers>.fromOpaque(userInfo).takeUnretainedValue()
+
+      if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+        if let tap = modifiers.eventTap {
+          CGEvent.tapEnable(tap: tap, enable: true)
+        }
+        return Unmanaged.passRetained(event)
+      }
+
+      modifiers.handleKeyEvent()
+      return Unmanaged.passRetained(event)
     }
-    keyMonitors = []
+
+    let userInfo = Unmanaged.passUnretained(self).toOpaque()
+    eventTap = CGEvent.tapCreate(
+      tap: .cgSessionEventTap,
+      place: .headInsertEventTap,
+      options: .listenOnly,
+      eventsOfInterest: CGEventMask(eventMask),
+      callback: callback,
+      userInfo: userInfo
+    )
+
+    guard let eventTap = eventTap else { return }
+
+    runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
+    guard let runLoopSource = runLoopSource else { return }
+
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+    CGEvent.tapEnable(tap: eventTap, enable: true)
+  }
+
+  private func removeEventTap() {
+    if let runLoopSource = runLoopSource {
+      CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+    }
+    if let eventTap = eventTap {
+      CGEvent.tapEnable(tap: eventTap, enable: false)
+    }
+    eventTap = nil
+    runLoopSource = nil
+  }
+
+  private func handleKeyEvent() {
+    if pendingIntention != .idle && activationTimer != nil {
+      DispatchQueue.main.async {
+        self.cancelActivationTimer()
+        self.pendingIntention = .idle
+      }
+    }
   }
 
   private func cancelActivationTimer() {
@@ -151,17 +198,6 @@ class Modifiers {
 
   private func localMonitor(_ event: NSEvent) -> NSEvent? {
     globalMonitor(event)
-    return event
-  }
-
-  private func keyDownMonitor(_ event: NSEvent) {
-    if pendingIntention != .idle && activationTimer != nil {
-      scheduleActivation(for: pendingIntention)
-    }
-  }
-
-  private func localKeyDownMonitor(_ event: NSEvent) -> NSEvent? {
-    keyDownMonitor(event)
     return event
   }
 }
