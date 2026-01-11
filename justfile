@@ -1,6 +1,6 @@
 scheme := "Moves"
 project := "Moves.xcodeproj"
-version := "1.0.8"
+version := "1.0.9"
 
 # List available commands
 default:
@@ -58,7 +58,7 @@ release part="patch": (update-version part)
     set -euo pipefail
     version=$(sed -n 's/^version := "\(.*\)"/\1/p' justfile)
     git tag "v${version}"
-    git push origin main "v${version}"
+    git push -q origin main "v${version}"
     echo "Released v${version}"
 
 # Update version (default 'patch', can be 'major', 'minor')
