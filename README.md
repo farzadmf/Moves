@@ -9,6 +9,10 @@ This is a fork of [Moves](https://github.com/niklasberglund/Moves) with some add
 - **Fix window jump**: Prevents window from jumping on activation by skipping stale mouse delta
 - **Justfile**: Allows using [just](https://github.com/casey/just) for running common tasks
 
+## Creating a new Github release
+
+- Run `just release`; by default it will bump the patch version, push a tag, kicking off a new release.
+
 ## Local development
 
 - `just run` will stop existing application, build, and start a new instance.
