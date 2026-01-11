@@ -192,7 +192,14 @@ class Modifiers {
       pendingIntention = .idle
       intention = .idle
     } else if newIntention != pendingIntention {
-      scheduleActivation(for: newIntention)
+      // If already active, switch modes immediately without delay
+      if intention != .idle {
+        cancelActivationTimer()
+        pendingIntention = newIntention
+        intention = newIntention
+      } else {
+        scheduleActivation(for: newIntention)
+      }
     }
   }
 
