@@ -20,7 +20,7 @@ default:
     xcodebuild -quiet -scheme {{scheme}} -configuration Debug -destination 'platform=macOS,arch=arm64' build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
 
 # Build release
-@release:
+@build-release:
     xcodebuild -quiet -scheme {{scheme}} -configuration Release -destination 'platform=macOS,arch=arm64' build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
 
 # Clean build artifacts
@@ -51,10 +51,15 @@ rebuild: clean build
 @settings:
     xcodebuild -scheme {{scheme}} -showBuildSettings
 
-# Tag and push a release
-@tag:
-    git tag v{{version}}
-    git push origin v{{version}}
+# Create a release: bump version, tag, and push
+# Usage: just release [patch|minor|major]
+release part="patch": (update-version part)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version=$(sed -n 's/^version := "\(.*\)"/\1/p' justfile)
+    git tag "v${version}"
+    git push origin main "v${version}"
+    echo "Released v${version}"
 
 # Update version (default 'patch', can be 'major', 'minor')
 [no-exit-message]
