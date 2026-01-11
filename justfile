@@ -1,6 +1,6 @@
 scheme := "Moves"
 project := "Moves.xcodeproj"
-version := "1.0.9"
+version := "1.0.10"
 
 # List available commands
 default:
