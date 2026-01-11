@@ -1,3 +1,16 @@
+# Moves (Fork)
+
+This is a fork of [Moves](https://github.com/niklasberglund/Moves) with some additional features and fixes.
+
+## Changes in this fork
+
+- **Activation delay**: Configurable delay before activating move/resize mode, preventing accidental activation when using keyboard shortcuts that include the modifier keys. Once active, switching between move/resize modes is instant (no delay).
+- **Floating indicator**: Visual feedback showing when move/resize mode is active
+- **Fix window jump**: Prevents window from jumping on activation by skipping stale mouse delta
+
+<details>
+<summary>Original README contents</summary>
+
 <img src="https://s3.brnbw.com/AppIcon-512px-1f47lkdLKcbpBvUS5BPd44GqycBOYsuqi29ze15MtRqBukjm19pdECa2KYvz7PzKX8brpY5YhVnk962zoPi5CUygHEjR8WYqZLUX.png" width="256" height="256" alt="Moves.app" />
 
 **Watch the introduction on YouTube:**
@@ -81,3 +94,5 @@ open "moves://custom/center?relativeWidth=0.75&relativeHeight=0.75"
 ## License
 
 MIT
+
+</details>
