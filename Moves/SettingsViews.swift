@@ -11,6 +11,7 @@ struct GeneralSettingsPane: View {
   @Default(.resizeModifiers) private var resizeModifiers
   @Default(.resizeFromClosestCorner) private var resizeFromClosestCorner
   @Default(.bringToFront) private var bringToFront
+  @Default(.activationDelay) private var activationDelay
   @Default(.accessibilityEnabled) private var accessibilityEnabled
   @Default(.showSettingsOnLaunch) private var showSettingsOnLaunch
   @Default(.showInMenubar) private var showInMenubar
@@ -47,6 +48,15 @@ struct GeneralSettingsPane: View {
           Spacer()
           
           Toggle("Bring window to front when handling", isOn: $bringToFront)
+
+          HStack {
+            Text("Activation delay:")
+            Slider(value: $activationDelay, in: 0...1, step: 0.1)
+              .frame(width: 100)
+            Text(String(format: "%.1fs", activationDelay))
+              .monospacedDigit()
+              .frame(width: 35, alignment: .trailing)
+          }
         }
       }
 
