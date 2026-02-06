@@ -18,6 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
   let statusItem = StatusItem()
   let windowHandler = WindowHandler()
+  private var previousApp: NSRunningApplication?
 
   lazy var settingsWindowController = SettingsWindowController(
     panes: [
@@ -42,6 +43,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   func applicationDidFinishLaunching(_ aNotification: Notification) {
     setupMainMenu()
     setSettingsActivation(active: false)
+
+    NSWorkspace.shared.notificationCenter.addObserver(
+      self,
+      selector: #selector(activeAppChanged),
+      name: NSWorkspace.didActivateApplicationNotification,
+      object: nil
+    )
 
     Task {
       for await value in Defaults.updates(.showInMenubar) {
@@ -87,7 +95,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   }
 
   func applicationDidBecomeActive(_ notification: Notification) {
-    showSettingsWindow()
+    if NSApp.windows.filter({ $0.isVisible }).isEmpty {
+      showSettingsWindow()
+    }
+  }
+
+  @objc private func activeAppChanged(_ notification: Notification) {
+    if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+       app.bundleIdentifier != Bundle.main.bundleIdentifier {
+      previousApp = app
+    }
   }
 
   func windowWillClose(_ notification: Notification) {
@@ -188,9 +205,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   // MARK: - URLs
 
   func application(_ application: NSApplication, open urls: [URL]) {
+    ActiveWindow.overrideApp = previousApp
     for url in urls {
       handleURL(url)
     }
+    ActiveWindow.overrideApp = nil
+    previousApp?.activate()
   }
 
   private func handleURL(_ url: URL) {
