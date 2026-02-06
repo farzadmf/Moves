@@ -28,10 +28,11 @@ class WindowHandler {
       return
     }
 
-    FloatingIndicator.shared.show(for: intention)
-
     let loc = Mouse.location()
-    guard let window = AccessibilityElement.at(loc)?.window else { return }
+    guard let window = AccessibilityElement.at(loc)?.window else {
+      FloatingIndicator.shared.show(for: intention, appName: nil)
+      return
+    }
 
     let app = window.application
 
@@ -49,6 +50,9 @@ class WindowHandler {
     } else {
       trackedWindowSize = .zero
     }
+
+    let appName = app.flatMap { getAppName(for: $0.element) }
+    FloatingIndicator.shared.show(for: intention, appName: appName)
 
     self.window = window
     self.initialMouseLocation = loc
@@ -81,6 +85,16 @@ class WindowHandler {
     if AXUIElementGetPid(axApplication, &pid) == .success {
       if let app = NSRunningApplication(processIdentifier: pid) {
         return app.bundleIdentifier
+      }
+    }
+    return nil
+  }
+
+  private func getAppName(for axApplication: AXUIElement) -> String? {
+    var pid: pid_t = 0
+    if AXUIElementGetPid(axApplication, &pid) == .success {
+      if let app = NSRunningApplication(processIdentifier: pid) {
+        return app.localizedName
       }
     }
     return nil

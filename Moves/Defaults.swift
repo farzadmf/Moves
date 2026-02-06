@@ -28,4 +28,6 @@ extension Defaults.Keys {
   static let excludedApplicationPaths = Key<Set<String>>("excludedApplicationPaths", default: [])
 
   static let activationDelay = Key<Double>("activationDelay", default: 0.5)
+  static let indicatorSize = Key<Double>("indicatorSize", default: 80)
+  static let indicatorFontSize = Key<Double>("indicatorFontSize", default: 18)
 }

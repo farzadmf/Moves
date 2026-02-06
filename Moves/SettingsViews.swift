@@ -12,6 +12,8 @@ struct GeneralSettingsPane: View {
   @Default(.resizeFromClosestCorner) private var resizeFromClosestCorner
   @Default(.bringToFront) private var bringToFront
   @Default(.activationDelay) private var activationDelay
+  @Default(.indicatorSize) private var indicatorSize
+  @Default(.indicatorFontSize) private var indicatorFontSize
   @Default(.accessibilityEnabled) private var accessibilityEnabled
   @Default(.showSettingsOnLaunch) private var showSettingsOnLaunch
   @Default(.showInMenubar) private var showInMenubar
@@ -48,12 +50,37 @@ struct GeneralSettingsPane: View {
           Spacer()
           
           Toggle("Bring window to front when handling", isOn: $bringToFront)
+        }
+      }
 
+      Settings.Section(title: "Activation", bottomDivider: true, verticalAlignment: .top) {
+        VStack(alignment: .leading, spacing: 10) {
           HStack {
-            Text("Activation delay:")
+            Text("Delay:")
+              .frame(width: 85, alignment: .trailing)
             Slider(value: $activationDelay, in: 0...1, step: 0.1)
               .frame(width: 100)
             Text(String(format: "%.1fs", activationDelay))
+              .monospacedDigit()
+              .frame(width: 35, alignment: .trailing)
+          }
+
+          HStack {
+            Text("Indicator size:")
+              .frame(width: 85, alignment: .trailing)
+            Slider(value: $indicatorSize, in: 40...150, step: 10)
+              .frame(width: 100)
+            Text(String(format: "%.0f", indicatorSize))
+              .monospacedDigit()
+              .frame(width: 35, alignment: .trailing)
+          }
+
+          HStack {
+            Text("Font size:")
+              .frame(width: 85, alignment: .trailing)
+            Slider(value: $indicatorFontSize, in: 12...30, step: 2)
+              .frame(width: 100)
+            Text(String(format: "%.0f", indicatorFontSize))
               .monospacedDigit()
               .frame(width: 35, alignment: .trailing)
           }
