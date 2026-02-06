@@ -2,8 +2,11 @@ import AXSwift
 import Cocoa
 
 class ActiveWindow {
+  static var overrideApp: NSRunningApplication?
+
   static func getFrontmost() -> AccessibilityElement? {
-    guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
+    let app = overrideApp ?? NSWorkspace.shared.frontmostApplication
+    guard let app = app else { return nil }
 
     do {
       if let appElement = Application(forProcessID: app.processIdentifier) {
