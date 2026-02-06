@@ -26,4 +26,6 @@ extension Defaults.Keys {
   static let showInMenubar = Key<Bool>("showInMenubar", default: true)
 
   static let excludedApplicationPaths = Key<Set<String>>("excludedApplicationPaths", default: [])
+
+  static let activationDelay = Key<Double>("activationDelay", default: 0.5)
 }
